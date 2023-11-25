@@ -1,5 +1,5 @@
 import './App.css'
-import { useState,useEffect, useRef, useReducer } from 'react'
+import { useState,useEffect, useRef, useReducer, useCallback } from 'react'
 
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query='
 
@@ -110,7 +110,7 @@ const App = () =>  {
     // filter stories 
   }
 
-  useEffect(()=>{
+  const handleFetchStories = useCallback(()=>{
     if (searchTerm === '') return;
     dispatchStories({type:'STORIES_FETCH_INIT'}) 
     fetch(`${API_ENDPOINT}${searchTerm}`).then((response)=>response.json())
@@ -120,7 +120,12 @@ const App = () =>  {
         payload:result.hits
       }) 
     }).catch(()=>dispatchStories({type:'STORIES_FETCH_FAILURE'}))
+
   },[searchTerm])
+
+  useEffect(()=>{
+   handleFetchStories()
+  },[handleFetchStories])
 
 
   const handleRemoveStory = (item) => {
