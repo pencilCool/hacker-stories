@@ -1,5 +1,5 @@
 import './App.css'
-import { useState,useEffect, useRef } from 'react'
+import { useState,useEffect, useRef, useReducer } from 'react'
 
 const useStorageState = (key,initialState)=> {
   const [value,setValue] = useState( localStorage.getItem(key) ?? initialState);
@@ -90,10 +90,25 @@ const getAsyncStories = ()=> {
   return p
 }
 
+const storiesReducer = (state,action) => {
+  if(action.type === 'SET_STORIES') {
+    return action.payload
+  } else if(action.type === 'REMOVE_STORIES') {
+    return state.filter((story)=>action.payload.objectID != story.objectID)
+  }
+  else {
+    throw new Error();
+  }
+}
+
 const App = () =>  {
   const [searchTerm,setSearchTerm] = useStorageState("search","react")
 
-  const [stories,setStories] = useState([])
+  // const [stories,setStories] = useState([])
+  const [stories,dispatchStories] = useReducer(storiesReducer,[])
+  const [isLoading,setIsLoading] = useState(true)
+  const [isError,setIsError] = useState(false)
+
 
   const handleSearch = (event) => {
     console.log(event.target.value);
@@ -102,9 +117,14 @@ const App = () =>  {
   }
 
   useEffect(()=>{
+    setIsLoading(true);
     getAsyncStories().then(result=>{
-      setStories(result.data.stories)
-    })
+      dispatchStories({
+        type:'SET_STORIES',
+        payload:result.data.stories
+      }) 
+      setIsLoading(false)
+    }).catch(()=>setIsError(true));
   },[])
 
   const searchedStories  = stories.filter(function(story) {
@@ -112,10 +132,10 @@ const App = () =>  {
   })
 
   const handleRemoveStory = (item) => {
-    const newStories = stories.filter(
-      (story)=> item.objectID !== story.objectID
-    );
-    setStories(newStories)
+    dispatchStories({
+      type:'REMOVE_STORIES',
+      payload:item
+    })
   }
 
   return (
@@ -126,7 +146,10 @@ const App = () =>  {
         <strong>Search:</strong>
         </InputWithLabel>
         <hr/>
+        {isError && <p>Something went wrong ...</p>}
+        {isLoading ? (<p>Loading...</p>) :(
         <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+        )}
       </div> 
     </>
   )
