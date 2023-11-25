@@ -90,24 +90,45 @@ const getAsyncStories = ()=> {
   return p
 }
 
+
+
 const storiesReducer = (state,action) => {
-  if(action.type === 'SET_STORIES') {
-    return action.payload
-  } else if(action.type === 'REMOVE_STORIES') {
-    return state.filter((story)=>action.payload.objectID != story.objectID)
+  switch (action.type) {
+    case 'STORIES_FETCH_INIT':
+      return {
+        ...state,
+        isLoading:true,
+        isError:false,
+      }
+    case 'STORIES_FETCH_SUCCESS': 
+      return {
+        ...state,
+        isLoading:false,
+        isError:false,
+        data:action.payload
+      }
+    case 'STORIES_FETCH_FAILURE':
+      return {
+        ...state,
+        isLoading:false,
+        isError:true
+      }
+    case 'REMOVE_STORIES':
+      return {
+        ...state,
+        data:state.data.filter((story)=>action.payload.objectID !== story.objectID)
+      }
+    default:
+      throw new Error();
   }
-  else {
-    throw new Error();
-  }
+
 }
 
 const App = () =>  {
   const [searchTerm,setSearchTerm] = useStorageState("search","react")
-
-  // const [stories,setStories] = useState([])
-  const [stories,dispatchStories] = useReducer(storiesReducer,[])
-  const [isLoading,setIsLoading] = useState(true)
-  const [isError,setIsError] = useState(false)
+  const [stories,dispatchStories] = useReducer(storiesReducer,{data:[],isLoading:false,isError:false})
+  // const [isLoading,setIsLoading] = useState(true)
+  // const [isError,setIsError] = useState(false)
 
 
   const handleSearch = (event) => {
@@ -117,17 +138,16 @@ const App = () =>  {
   }
 
   useEffect(()=>{
-    setIsLoading(true);
+    dispatchStories({type:'STORIES_FETCH_INIT'}) 
     getAsyncStories().then(result=>{
       dispatchStories({
-        type:'SET_STORIES',
+        type:'STORIES_FETCH_SUCCESS',
         payload:result.data.stories
       }) 
-      setIsLoading(false)
-    }).catch(()=>setIsError(true));
+    }).catch(()=>dispatchStories({type:'STORIES_FETCH_FAILURE'}))
   },[])
 
-  const searchedStories  = stories.filter(function(story) {
+  const searchedStories  = stories.data.filter((story) => {
     return story.title.toLowerCase().includes(searchTerm.toLowerCase());
   })
 
@@ -146,8 +166,8 @@ const App = () =>  {
         <strong>Search:</strong>
         </InputWithLabel>
         <hr/>
-        {isError && <p>Something went wrong ...</p>}
-        {isLoading ? (<p>Loading...</p>) :(
+        {stories.isError && <p>Something went wrong ...</p>}
+        {stories.isLoading ? (<p>Loading...</p>) :(
         <List list={searchedStories} onRemoveItem={handleRemoveStory} />
         )}
       </div> 
