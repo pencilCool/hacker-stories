@@ -114,16 +114,18 @@ const App = () =>  {
     setUrl(`${API_ENDPOINT}${searchTerm}`)
   }
 
-  const handleFetchStories = useCallback(()=>{
+  const handleFetchStories = useCallback(async ()=>{
     dispatchStories({type:'STORIES_FETCH_INIT'}) 
-    axios.get(url)
-    .then((result)=>{
+    
+    try {
+      const result = await axios.get(url)
       dispatchStories({
         type:'STORIES_FETCH_SUCCESS',
         payload:result.data.hits
       }) 
-    }).catch(()=>dispatchStories({type:'STORIES_FETCH_FAILURE'}))
-
+    } catch {
+      dispatchStories({type:'STORIES_FETCH_FAILURE'})
+    }
   },[url])
 
   useEffect(()=>{
