@@ -103,17 +103,20 @@ const App = () =>  {
   const [searchTerm,setSearchTerm] = useStorageState("search","react")
   const [stories,dispatchStories] = useReducer(storiesReducer,{data:[],isLoading:false,isError:false})
 
+  const [url,setUrl] = useState(`${API_ENDPOINT}${searchTerm}`)
 
-  const handleSearch = (event) => {
-    console.log(event.target.value);
+  const handleSearchInput = (event) => {
     setSearchTerm(event.target.value);
     // filter stories 
   }
 
+  const handleSearchSumbit = ()=> {
+    setUrl(`${API_ENDPOINT}${searchTerm}`)
+  }
+
   const handleFetchStories = useCallback(()=>{
-    if (searchTerm === '') return;
     dispatchStories({type:'STORIES_FETCH_INIT'}) 
-    fetch(`${API_ENDPOINT}${searchTerm}`).then((response)=>response.json())
+    fetch(url).then((response)=>response.json())
     .then((result)=>{
       dispatchStories({
         type:'STORIES_FETCH_SUCCESS',
@@ -121,7 +124,7 @@ const App = () =>  {
       }) 
     }).catch(()=>dispatchStories({type:'STORIES_FETCH_FAILURE'}))
 
-  },[searchTerm])
+  },[url])
 
   useEffect(()=>{
    handleFetchStories()
@@ -139,10 +142,15 @@ const App = () =>  {
     <>
       <div>
         <h1> My Hacker Stories </h1>
-        <InputWithLabel id="search" label='search' value={searchTerm} onInputChange={handleSearch}>
+        <InputWithLabel id="search" label='search' value={searchTerm} onInputChange={handleSearchInput}>
         <strong>Search:</strong>
         </InputWithLabel>
+        <button type='button' disabled={!searchTerm} onClick={handleSearchSumbit}>
+          Submit
+        </button>
+
         <hr/>
+
         {stories.isError && <p>Something went wrong ...</p>}
         {stories.isLoading ? (<p>Loading...</p>) :(
         <List list={stories.data} onRemoveItem={handleRemoveStory} />
