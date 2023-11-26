@@ -88,7 +88,7 @@ const storiesReducer = (state,action) => {
         isLoading:false,
         isError:true
       }
-    case 'REMOVE_STORIES':
+    case 'REMOVE_STORY':
       return {
         ...state,
         data:state.data.filter((story)=>action.payload.objectID !== story.objectID)
@@ -147,7 +147,7 @@ const App = () =>  {
 
   const handleRemoveStory = (item) => {
     dispatchStories({
-      type:'REMOVE_STORIES',
+      type:'REMOVE_STORY',
       payload:item
     })
   }
@@ -171,3 +171,5 @@ const App = () =>  {
 }
    
 export default App
+
+export {storiesReducer,SearchForm,InputWithLabel,List,Item};
